@@ -87,6 +87,7 @@ class Adafruit_DRV2605 {
   // The default is ERM, which is more common
   void useERM();
   void useLRA();
+  bool autoCal(uint8_t ratedVoltage, uint8_t overdriveClamp, uint8_t driveTime);
 
  private:
 

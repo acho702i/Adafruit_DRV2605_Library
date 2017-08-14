@@ -25,6 +25,9 @@
 
 #include <Adafruit_DRV2605.h>
 
+// Remove comment to print auto calibration results
+//#define DRV2605_PRINT_A_CAL_RESULT
+
 /**************************************************************************/
 /*! 
     @brief  Instantiates a new DRV2605 class
@@ -134,4 +137,31 @@ void Adafruit_DRV2605::useLRA ()
 }
 
 
+bool Adafruit_DRV2605::autoCal(uint8_t ratedVoltage, uint8_t overdriveClamp, uint8_t driveTime)
+{
+  bool isFailed = true;
+  // Write required Registers
+  writeRegister8(DRV2605_REG_RATEDV, ratedVoltage);
+  writeRegister8(DRV2605_REG_CLAMPV, overdriveClamp);
+  writeRegister8(DRV2605_REG_CONTROL1, driveTime & (0xE0 | readRegister8(DRV2605_REG_CONTROL1)));
+  
+  setMode(DRV2605_MODE_AUTOCAL);
+  go();
+
+  do{
+    delay(100);
+    }while(readRegister8(DRV2605_REG_GO));
+
+  isFailed = readRegister8(DRV2605_REG_STATUS) & 0x08;
+
+#ifdef DRV2605_PRINT_A_CAL_RESULT
+  Serial.print("Auto calibration ");
+  isFailed ? Serial.println("failed") : Serial.println("succeeded");
+  Serial.print("A_CAL_COMP:"); Serial.println(readRegister8(DRV2605_REG_AUTOCALCOMP), HEX);
+  Serial.print("A_CAL_BEMF:"); Serial.println(readRegister8(DRV2605_REG_AUTOCALEMP), HEX);
+  Serial.print("FEEDBACK:"); Serial.println(readRegister8(DRV2605_REG_FEEDBACK), HEX);
+#endif
+
+  return !isFailed;
+}
 
